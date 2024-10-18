@@ -1,6 +1,16 @@
 # CPSC449_Project
 
-## Create Import MySQL Database
+## Create Container and Install Required Dependencies
+Create container
+    ```bash
+    python3 -m venv myenv
+    source myenv/bin/activate
+    
+Install Dependencies
+    ```bash
+    pip install -r requirements.txt
+
+## Create and Import MySQL Database
 To set up the project's database, follow these steps:
 
 1. Ensure you have MySQL installed and running on your system.

@@ -1,12 +1,12 @@
 # CPSC449_Project
 
 ## Create Container and Install Required Dependencies
-Create container
+1. Create container
     ```bash
     python3 -m venv myenv
     source myenv/bin/activate
     
-Install Dependencies
+2. Install Dependencies
     ```bash
     pip install -r requirements.txt
 

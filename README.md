@@ -1,5 +1,11 @@
 # CPSC449_Project
 
+## Group Members
+1. Parastoo Toosi CWID 890049349 
+2. Elexzandreia Livermore CWID 
+3. Benjamin Nguyen CWID 884523655
+4. Chelsea Ogbedeagu CWID
+
 ## Create Container and Install Required Dependencies
 1. Create container
     ```bash
@@ -27,8 +33,4 @@ To set up the project's database, follow these steps:
 
 5. When prompted, enter your MySQL root password.
 
-## Group Members
-1. Parastoo Toosi CWID 890049349 
-2. Elexzandreia Livermore CWID 
-3. Benjamin Nguyen CWID 884523655
-4. Chelsea Ogbedeagu CWID
+

@@ -2,7 +2,7 @@
 
 ## Group Members
 1. Parastoo Toosi CWID 890049349 
-2. Elexzandreia Livermore CWID 
+2. Elexzandreia Livermore CWID 888823101 
 3. Benjamin Nguyen CWID 884523655
 4. Chelsea Ogbedeagu CWID
 

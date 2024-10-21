@@ -10,7 +10,8 @@
 1. Create container
     ```bash
     python3 -m venv myenv
-    source myenv/bin/activate
+    source myenv/bin/activate[in Linux]
+    myenv\Scripts\activate [in Windows]
     
 2. Install Dependencies
     ```bash
@@ -33,4 +34,10 @@ To set up the project's database, follow these steps:
 
 5. When prompted, enter your MySQL root password.
 
+6. Install the packages mentioned in requirements.txt file
+    ```bash
+    pip install -r requirements.txt
 
+7. Run the following command to list all installed packages and write them to requirements.txt
+    ```bash
+    pip freeze > requirements.txt

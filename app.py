@@ -1,17 +1,21 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
+from werkzeug.security import generate_password_hash, check_password_hash
+import datetime
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://username:password@localhost/movie_ratings'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Slam36jooj@127.0.0.1:3306/movie_ratings'
 app.config['JWT_SECRET_KEY'] = 'your_secret_key'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(hours=1)
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
 class User(db.Model):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
 
 class Movie(db.Model):
@@ -25,6 +29,40 @@ class Rating(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'))
     rating = db.Column(db.Integer, nullable=False)
+
+# Register endpoint (for both users and admins)
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+
+    # Check if the user already exists
+    if User.query.filter_by(username=data['username']).first():
+        return jsonify({'message': 'User already exists!'}), 400
+
+    # Hash the password and create a new user
+    hashed_password = generate_password_hash(data['password'], method='pbkdf2:sha256')
+    new_user = User(username=data['username'], password=hashed_password, is_admin=data.get('is_admin', False))
+
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({'message': 'User registered successfully!'}), 201
+    except Exception as e:
+        return jsonify({'message': 'User registration failed.', 'error': str(e)}), 400
+
+# Login endpoint (JWT authentication)
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+
+    # Check if the user exists and the password matches
+    user = User.query.filter_by(username=data['username']).first()
+    if not user or not check_password_hash(user.password, data['password']):
+        return jsonify({'message': 'Invalid credentials!'}), 401
+
+    # Generate a JWT access token
+    access_token = create_access_token(identity={'username': user.username, 'is_admin': user.is_admin})
+    return jsonify({'access_token': access_token}), 200
 
 # Endpoint for users to submit their ratings for movies
 @app.route('/movies/<int:movie_id>/rating', methods=['POST'])
@@ -82,4 +120,6 @@ def get_movie_details(movie_id):
     return jsonify(movie_details), 200
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)

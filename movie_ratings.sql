@@ -80,7 +80,7 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(50) DEFAULT NULL,
-  `password_hash` varchar(255) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL,
   `is_admin` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)

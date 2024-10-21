@@ -15,6 +15,7 @@ docopt==0.6.2
 executing==2.1.0
 fastjsonschema==2.20.0
 Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
 Flask-Bcrypt==1.0.1
 Flask-JWT-Extended==4.6.0
 flask-mysql-connector==1.1.0
@@ -48,6 +49,7 @@ ptyprocess==0.7.0
 pure_eval==0.2.3
 Pygments==2.18.0
 PyJWT==2.9.0
+pymysql==1.1.1
 python-dateutil==2.9.0.post0
 pytz==2024.2
 pyzmq==26.2.0

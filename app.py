@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Slam36jooj@127.0.0.1:3306/movie_ratings'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:example@127.0.0.1:5000/movie_ratings'
 app.config['JWT_SECRET_KEY'] = 'your_secret_key'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(hours=1)
 db = SQLAlchemy(app)
@@ -33,7 +33,7 @@ class Rating(db.Model):
     movie_id = db.Column(db.Integer, db.ForeignKey('movies.id', ondelete='CASCADE'), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
 
-     __table_args__ = (
+    __table_args__ = (
         db.CheckConstraint('rating BETWEEN 1 AND 10', name='ratings_chk_1'),
     )
 
@@ -131,7 +131,8 @@ def get_movie_details(movie_id):
 @jwt_required()
 def update_rating(movie_id):
     user_identity = get_jwt_identity()
-    user = User.query.filter_by(username=user_identity).first()
+    user = User.query.filter_by(username=user_identity['username']).first()
+
     if not user:
         return jsonify({'message': 'User not found'}), 404
 
@@ -158,7 +159,9 @@ def update_rating(movie_id):
 @jwt_required()
 def admin_delete_rating(rating_id):
     user_identity = get_jwt_identity()
-    user = User.query.filter_by(username=user_identity).first()
+    username = user_identity['username'] if isinstance(user_identity, dict) else user_identity
+    user = User.query.filter_by(username=username).first()
+    
     if not user or not user.is_admin:
         return jsonify({'message': 'Unauthorized access'}), 403
 
@@ -176,7 +179,9 @@ def admin_delete_rating(rating_id):
 @jwt_required()
 def delete_own_rating(movie_id):
     user_identity = get_jwt_identity()
-    user = User.query.filter_by(username=user_identity).first()
+    username = user_identity['username'] if isinstance(user_identity, dict) else user_identity
+    user = User.query.filter_by(username=username).first()
+    
     if not user:
         return jsonify({'message': 'User not found'}), 404
 
@@ -191,6 +196,46 @@ def delete_own_rating(movie_id):
     db.session.commit()
 
     return jsonify({'message': 'Rating deleted successfully'}), 200
+
+# Retrieve all ratings for movies
+@app.route('/ratings/list', methods=['GET'])
+def get_ratings():
+    movies = Movie.query.all()
+    movies_data = []
+    for movie in movies:
+        ratings = Rating.query.filter_by(movie_id=movie.id).all()
+        movie_ratings = [rating.rating for rating in ratings]
+        movies_data.append({
+            'id': movie.id,
+            'title': movie.title,
+            'release_year': movie.release_year,
+            'ratings': movie_ratings
+        })
+
+    return jsonify(movies_data), 200
+
+# Admin endpoint to add a new movie
+@app.route('/movies/add', methods=['POST'])
+@jwt_required()
+def add_movie():
+    current_user = get_jwt_identity()
+    if not current_user.get('is_admin'):
+        return jsonify({'error': 'Admin access required'}), 403
+
+    data = request.get_json()
+    title = data.get('title')
+    description = data.get('description')
+    release_year = data.get('release_year')
+
+    if not title or not release_year:
+        return jsonify({'error': 'Title and Release Year are required'}), 400
+
+    new_movie = Movie(title=title, description=description, release_year=release_year)
+    db.session.add(new_movie)
+    db.session.commit()
+
+    return jsonify({'message': 'Movie added successfully', 'movie': new_movie.id}), 201
+
 
 if __name__ == '__main__':
     with app.app_context():

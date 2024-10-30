@@ -1,15 +1,27 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
+from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
+import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:example@127.0.0.1:5000/movie_ratings'
 app.config['JWT_SECRET_KEY'] = 'your_secret_key'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(hours=1)
+app.config['UPLOAD_FOLDER'] = 'uploads'  # Folder for storing uploaded files
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpeg', 'gif'}  # Set allowed extensions
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
+
+# Ensure the upload folder exists, and create it if not
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
+# Helper function to check file extension
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 # Update the User model to match the database schema
 class User(db.Model):
@@ -70,6 +82,26 @@ def login():
     # Generate a JWT access token
     access_token = create_access_token(identity={'username': user.username, 'is_admin': user.is_admin})
     return jsonify({'access_token': access_token}), 200
+
+# File upload endpoint
+@app.route('/upload', methods=['POST'])
+@jwt_required()
+def upload_file():
+    # Check if a file is part of the request
+    if 'file' not in request.files:
+        return jsonify({'message': 'No file part in the request'}), 400
+    file = request.files['file']
+
+    # Check if the file has a valid filename and allowed extension
+    if file.filename == '':
+        return jsonify({'message': 'No file selected for uploading'}), 400
+    if file and allowed_file(file.filename):
+        # Secure the filename and save the file to the specified folder
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return jsonify({'message': 'File successfully uploaded', 'filename': filename}), 201
+    else:
+        return jsonify({'message': 'File type is not allowed'}), 400
 
 # Endpoint for users to submit their ratings for movies
 @app.route('/movies/<int:movie_id>/rating', methods=['POST'])
